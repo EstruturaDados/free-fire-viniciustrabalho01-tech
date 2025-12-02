@@ -1,0 +1,228 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+// Struct para armazenar as informações de um item.
+// Campos: nome (máx 30), tipo (máx 20) e quantidade.
+typedef struct {
+    char nome[30];
+    char tipo[20];
+    int quantidade;
+} Item;
+
+// Vetor de structs para armazenar até 10 itens (a mochila).
+Item inventario[10];
+// Variável para rastrear a quantidade atual de itens no inventário.
+int numItens = 0;
+
+
+
+/**
+ * @brief Adiciona um novo item ao inventário.
+ * * Permite o cadastro de um novo item (nome, tipo, quantidade) 
+ * no primeiro espaço livre do vetor de structs, respeitando o limite (10).
+ */
+void inserirItem() {
+    // Verifica se a mochila está cheia
+    if (numItens >= 10) {
+        printf("\n🚫 Inventário cheio! (Limite: 10 itens)\n");
+        return;
+    }
+
+    printf("\n--- ➕ Cadastrar Novo Item ---\n");
+    
+    // Leitura do Nome (com proteção contra buffer)
+    printf("Nome do Item (max 29 caracteres): ");
+    // Limpa o buffer antes de ler a string
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF); 
+    if (fgets(inventario[numItens].nome, 30, stdin) != NULL) {
+        // Remove o '\n' lido pelo fgets, se presente
+        inventario[numItens].nome[strcspn(inventario[numItens].nome, "\n")] = 0;
+    }
+
+    // Leitura do Tipo
+    printf("Tipo (ex: arma, municao, cura): ");
+    if (fgets(inventario[numItens].tipo, 20, stdin) != NULL) {
+        // Remove o '\n' lido pelo fgets, se presente
+        inventario[numItens].tipo[strcspn(inventario[numItens].tipo, "\n")] = 0;
+    }
+
+    // Leitura da Quantidade
+    printf("Quantidade: ");
+    if (scanf("%d", &inventario[numItens].quantidade) != 1) {
+        printf("⚠️ Entrada inválida para quantidade. Cadastro cancelado.\n");
+        // Decrementa numItens caso a leitura falhe (seria incrementado no final)
+        return; 
+    }
+
+    // Incrementa o contador, pois o item foi cadastrado com sucesso
+    numItens++; 
+    printf("\n✅ Item '%s' cadastrado com sucesso! Espaços restantes: %d\n", 
+           inventario[numItens - 1].nome, 10 - numItens);
+}
+
+/**
+ * @brief Remove um item do inventário pelo nome.
+ * * Utiliza busca sequencial para encontrar o item. Se encontrado, 
+ * move os itens subsequentes uma posição para trás para cobrir o buraco.
+ */
+void removerItem() {
+    if (numItens == 0) {
+        printf("\n❌ Inventário vazio. Não há itens para remover.\n");
+        return;
+    }
+
+    char nomeBusca[30];
+    printf("\n--- 🗑️ Remover Item ---\n");
+    printf("Digite o NOME do item a ser removido: ");
+    // Limpa o buffer antes de ler a string
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF); 
+    if (fgets(nomeBusca, 30, stdin) != NULL) {
+        // Remove o '\n' lido pelo fgets, se presente
+        nomeBusca[strcspn(nomeBusca, "\n")] = 0;
+    }
+
+    int i, encontrado = 0;
+    // Percorre o vetor para buscar o item
+    for (i = 0; i < numItens; i++) {
+        // Compara o nome do item na posição 'i' com o nome de busca
+        if (strcmp(inventario[i].nome, nomeBusca) == 0) {
+            encontrado = 1;
+            break; // Item encontrado na posição 'i'
+        }
+    }
+
+    if (encontrado) {
+        printf("✅ Item '%s' encontrado e removido.\n", inventario[i].nome);
+        
+        // Deslocamento: move todos os itens a partir da posição 'i+1' 
+        // uma posição para a esquerda, sobrescrevendo o item removido.
+        for (int j = i; j < numItens - 1; j++) {
+            inventario[j] = inventario[j + 1];
+        }
+
+        // Decrementa o número total de itens
+        numItens--;
+    } else {
+        printf("\n⚠️ Item '%s' não encontrado no inventário.\n", nomeBusca);
+    }
+}
+
+/**
+ * @brief Exibe todos os itens cadastrados no inventário.
+ * * Lista de forma organizada o nome, tipo e quantidade de cada item.
+ */
+void listarItens() {
+    printf("\n--- 📦 Inventário Atual (Itens: %d/10) ---\n", numItens);
+    
+    if (numItens == 0) {
+        printf("A mochila está vazia. Colete alguns itens!\n");
+        return;
+    }
+
+    printf("+------------------------------+--------------------+--------------+\n");
+    printf("| Nome do Item                 | Tipo               | Quantidade   |\n");
+    printf("+------------------------------+--------------------+--------------+\n");
+
+    // Percorre o vetor e imprime os dados de cada item
+    for (int i = 0; i < numItens; i++) {
+        printf("| %-28s | %-18s | %-12d |\n", 
+               inventario[i].nome, inventario[i].tipo, inventario[i].quantidade);
+    }
+    printf("+------------------------------+--------------------+--------------+\n");
+}
+
+/**
+ * @brief Implementa a busca sequencial por nome.
+ * * Percorre o vetor do início ao fim para encontrar um item específico.
+ */
+void buscarItem() {
+    if (numItens == 0) {
+        printf("\n❌ Inventário vazio. Não há itens para buscar.\n");
+        return;
+    }
+
+    char nomeBusca[30];
+    printf("\n--- 🔍 Buscar Item ---\n");
+    printf("Digite o NOME do item para buscar: ");
+    // Limpa o buffer antes de ler a string
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+    if (fgets(nomeBusca, 30, stdin) != NULL) {
+        // Remove o '\n' lido pelo fgets, se presente
+        nomeBusca[strcspn(nomeBusca, "\n")] = 0;
+    }
+
+    int encontrado = 0;
+    
+    // Busca sequencial: percorre o vetor posição por posição
+    for (int i = 0; i < numItens; i++) {
+        // Compara o nome atual com o nome de busca
+        if (strcmp(inventario[i].nome, nomeBusca) == 0) {
+            encontrado = 1;
+            printf("\n--- 🎯 Item Encontrado ---\n");
+            printf("Nome:       %s\n", inventario[i].nome);
+            printf("Tipo:       %s\n", inventario[i].tipo);
+            printf("Quantidade: %d\n", inventario[i].quantidade);
+            printf("---------------------------\n");
+            break; // Item encontrado, pode sair do laço
+        }
+    }
+
+    if (!encontrado) {
+        printf("\n⚠️ Item '%s' não encontrado na mochila.\n", nomeBusca);
+    }
+}
+
+
+// --- 3. Função Principal (Menu e Fluxo de Execução) ---
+int main() {
+    int opcao;
+
+    printf("╔═════════════════════════════════════════════════╗\n");
+    printf("║         🎮 Sistema de Inventário (Mochila)      ║\n");
+    printf("║      Recursos Essenciais: Organização de Dados   ║\n");
+    printf("╚═════════════════════════════════════════════════╝\n");
+    
+    do {
+        // Usabilidade: Menu claro e orientativo
+        listarItens(); // Listagem após cada operação
+
+        printf("\n--- Escolha sua Ação ---\n");
+        printf("1. ➕ Cadastrar Novo Item\n");
+        printf("2. 🗑️ Remover Item (por Nome)\n");
+        printf("3. 🔍 Buscar Item (por Nome)\n");
+        printf("0. 🚪 Sair do Jogo\n");
+        printf("Opção: ");
+        
+        // Leitura da opção
+        if (scanf("%d", &opcao) != 1) {
+            printf("⚠️ Entrada inválida. Tente novamente.\n");
+            // Limpa o buffer de entrada em caso de erro
+            while (getchar() != '\n'); 
+            opcao = -1; // Garante que o loop continue
+            continue;
+        }
+
+        switch (opcao) {
+            case 1:
+                inserirItem();
+                break;
+            case 2:
+                removerItem();
+                break;
+            case 3:
+                buscarItem();
+                break;
+            case 0:
+                printf("\n👋 Fechando a mochila. Jogo encerrado.\n");
+                break;
+            default:
+                printf("\nOpção inválida. Tente novamente.\n");
+        }
+    } while (opcao != 0);
+
+    return 0;
+}
