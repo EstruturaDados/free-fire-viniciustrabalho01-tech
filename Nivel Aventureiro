@@ -1,0 +1,276 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// --- Definições Globais e Structs ---
+
+// Struct para representar um item da mochila (igual para ambas as estruturas)
+typedef struct {
+    char nome[30];
+    char tipo[20];
+    int quantidade;
+} Item;
+
+// Struct para representar um nó na Lista Encadeada
+typedef struct No {
+    Item dados;
+    struct No* proximo;
+} No;
+
+// --- Variáveis de Controle do Vetor (Mochila Sequencial) ---
+Item mochilaVetor[10]; // Limite de 10 itens
+int numItensVetor = 0;
+
+// --- Variáveis de Controle da Lista Encadeada (Mochila Dinâmica) ---
+No* listaEncadeada = NULL;
+
+// --- Contadores de Desempenho ---
+long int comparacoesSequencial = 0;
+long int comparacoesBinaria = 0;
+
+// --------------------------------------------------------------------------
+//                              FUNÇÕES DO VETOR
+// --------------------------------------------------------------------------
+
+/**
+ * @brief Insere um novo item no vetor.
+ * * Inserção O(1) (constante) se o vetor não estiver cheio.
+ */
+void inserirItemVetor() {
+    if (numItensVetor >= 10) {
+        printf("\n🚫 Mochila Sequencial (Vetor) Cheia! (Max 10)\n");
+        return;
+    }
+
+    printf("\n--- ➕ Cadastrar Item no Vetor ---\n");
+    Item novoItem;
+
+    // Leitura do Nome (Limpa o buffer antes)
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF); 
+    printf("Nome do Item: ");
+    if (fgets(novoItem.nome, 30, stdin) != NULL) {
+        novoItem.nome[strcspn(novoItem.nome, "\n")] = 0;
+    }
+
+    printf("Tipo (arma, municao, cura): ");
+    if (fgets(novoItem.tipo, 20, stdin) != NULL) {
+        novoItem.tipo[strcspn(novoItem.tipo, "\n")] = 0;
+    }
+
+    printf("Quantidade: ");
+    if (scanf("%d", &novoItem.quantidade) != 1) {
+        printf("⚠️ Entrada inválida para quantidade.\n");
+        return; 
+    }
+    
+    // Inserção no final do vetor
+    mochilaVetor[numItensVetor] = novoItem;
+    numItensVetor++;
+    printf("\n✅ Item '%s' inserido com sucesso no vetor.\n", novoItem.nome);
+}
+
+/**
+ * @brief Remove um item do vetor pelo nome.
+ * * Remoção O(N) (linear) devido à necessidade de deslocamento.
+ */
+void removerItemVetor() {
+    if (numItensVetor == 0) {
+        printf("\n❌ Mochila Vetor vazia.\n");
+        return;
+    }
+
+    char nomeBusca[30];
+    printf("\n--- 🗑️ Remover Item do Vetor ---\n");
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF); 
+    printf("Digite o NOME do item a ser removido: ");
+    if (fgets(nomeBusca, 30, stdin) != NULL) {
+        nomeBusca[strcspn(nomeBusca, "\n")] = 0;
+    }
+
+    int i, encontrado = 0;
+    // Busca sequencial para encontrar a posição
+    for (i = 0; i < numItensVetor; i++) {
+        if (strcmp(mochilaVetor[i].nome, nomeBusca) == 0) {
+            encontrado = 1;
+            break; 
+        }
+    }
+
+    if (encontrado) {
+        printf("✅ Item '%s' removido do vetor.\n", mochilaVetor[i].nome);
+        
+        // Deslocamento: move os itens subsequentes uma posição para trás
+        for (int j = i; j < numItensVetor - 1; j++) {
+            mochilaVetor[j] = mochilaVetor[j + 1];
+        }
+
+        numItensVetor--;
+    } else {
+        printf("\n⚠️ Item '%s' não encontrado no vetor.\n", nomeBusca);
+    }
+}
+
+/**
+ * @brief Lista todos os itens do vetor.
+ * * Listagem O(N) (linear).
+ */
+void listarItensVetor() {
+    printf("\n--- 📦 MOCHILA SEQUENCIAL (Vetor: %d/10) ---\n", numItensVetor);
+    
+    if (numItensVetor == 0) {
+        printf("O vetor está vazio.\n");
+        return;
+    }
+
+    printf("+------------------------------+--------------------+--------------+\n");
+    printf("| Nome do Item                 | Tipo               | Quantidade   |\n");
+    printf("+------------------------------+--------------------+--------------+\n");
+
+    for (int i = 0; i < numItensVetor; i++) {
+        printf("| %-28s | %-18s | %-12d |\n", 
+               mochilaVetor[i].nome, mochilaVetor[i].tipo, mochilaVetor[i].quantidade);
+    }
+    printf("+------------------------------+--------------------+--------------+\n");
+}
+
+/**
+ * @brief Ordena os itens do vetor por nome (usando Selection Sort).
+ * * Ordenação O(N^2) (quadrática).
+ */
+void ordenarVetor() {
+    if (numItensVetor <= 1) {
+        printf("\nℹ️  Vetor já ordenado ou com 0/1 item.\n");
+        return;
+    }
+
+    // Selection Sort
+    for (int i = 0; i < numItensVetor - 1; i++) {
+        int min_idx = i;
+        for (int j = i + 1; j < numItensVetor; j++) {
+            // Compara os nomes para encontrar o menor
+            if (strcmp(mochilaVetor[j].nome, mochilaVetor[min_idx].nome) < 0) {
+                min_idx = j;
+            }
+        }
+        // Troca o elemento encontrado com o primeiro não ordenado
+        if (min_idx != i) {
+            Item temp = mochilaVetor[i];
+            mochilaVetor[i] = mochilaVetor[min_idx];
+            mochilaVetor[min_idx] = temp;
+        }
+    }
+    printf("\n✅ Vetor ordenado por nome (Selection Sort).\n");
+}
+
+/**
+ * @brief Busca item no vetor de forma sequencial.
+ * * Busca O(N) (linear).
+ */
+void buscarSequencialVetor() {
+    if (numItensVetor == 0) {
+        printf("\n❌ Vetor vazio.\n");
+        return;
+    }
+
+    char nomeBusca[30];
+    printf("\n--- 🔍 Busca SEQUENCIAL no Vetor ---\n");
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+    printf("Digite o NOME do item para buscar: ");
+    if (fgets(nomeBusca, 30, stdin) != NULL) {
+        nomeBusca[strcspn(nomeBusca, "\n")] = 0;
+    }
+
+    int encontrado = 0;
+    comparacoesSequencial = 0; // Zera o contador
+
+    // Busca sequencial
+    for (int i = 0; i < numItensVetor; i++) {
+        comparacoesSequencial++;
+        if (strcmp(mochilaVetor[i].nome, nomeBusca) == 0) {
+            encontrado = 1;
+            printf("\n--- 🎯 Item Encontrado (Seq) ---\n");
+            printf("Nome: %s | Tipo: %s | Qtd: %d\n", mochilaVetor[i].nome, mochilaVetor[i].tipo, mochilaVetor[i].quantidade);
+            break; 
+        }
+    }
+
+    if (!encontrado) {
+        printf("\n⚠️ Item '%s' não encontrado.\n", nomeBusca);
+    }
+    printf("📊 Comparações Realizadas: %ld\n", comparacoesSequencial);
+}
+
+/**
+ * @brief Busca item no vetor de forma binária. Requer vetor ordenado.
+ * * Busca O(log N) (logarítmica), muito mais rápida em vetores grandes.
+ */
+void buscarBinariaVetor() {
+    if (numItensVetor == 0) {
+        printf("\n❌ Vetor vazio.\n");
+        return;
+    }
+
+    char nomeBusca[30];
+    printf("\n--- 🔍 Busca BINÁRIA no Vetor ---\n");
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+    printf("Digite o NOME do item para buscar: ");
+    if (fgets(nomeBusca, 30, stdin) != NULL) {
+        nomeBusca[strcspn(nomeBusca, "\n")] = 0;
+    }
+
+    int inicio = 0;
+    int fim = numItensVetor - 1;
+    int encontrado = 0;
+    comparacoesBinaria = 0; // Zera o contador
+
+    // Busca Binária
+    while (inicio <= fim) {
+        comparacoesBinaria++; // Conta a comparação do meio
+        int meio = (inicio + fim) / 2;
+        int resultadoComparacao = strcmp(mochilaVetor[meio].nome, nomeBusca);
+
+        if (resultadoComparacao == 0) {
+            encontrado = 1;
+            printf("\n--- 🎯 Item Encontrado (Bin) ---\n");
+            printf("Nome: %s | Tipo: %s | Qtd: %d\n", mochilaVetor[meio].nome, mochilaVetor[meio].tipo, mochilaVetor[meio].quantidade);
+            break;
+        } else if (resultadoComparacao < 0) {
+            inicio = meio + 1; // Item está na metade superior
+        } else {
+            fim = meio - 1; // Item está na metade inferior
+        }
+    }
+
+    if (!encontrado) {
+        printf("\n⚠️ Item '%s' não encontrado.\n", nomeBusca);
+    }
+    printf("📊 Comparações Realizadas: %ld\n", comparacoesBinaria);
+}
+
+// --------------------------------------------------------------------------
+//                           FUNÇÕES DA LISTA ENCAEDADA
+// --------------------------------------------------------------------------
+
+/**
+ * @brief Insere um novo item na lista encadeada (no início).
+ * * Inserção O(1) (constante), a mais eficiente para listas encadeadas.
+ */
+void inserirItemLista() {
+    printf("\n--- ➕ Cadastrar Item na Lista Encadeada ---\n");
+    Item novoItem;
+
+    // Leitura do Nome (Limpa o buffer antes)
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+    printf("Nome do Item: ");
+    if (fgets(novoItem.nome, 30, stdin) != NULL) {
+        novoItem.nome[strcspn(novoItem.nome, "\n")] = 0;
+    }
+
+    printf("Tipo (arma, municao, cura): ");
+    if (fgets(novoItem.tipo, 20, stdin) != NULL) {
+        novoItem.tipo
